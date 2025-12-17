@@ -1,11 +1,11 @@
-# Gemini File Search RAG (Node + TypeScript)
+# Gemini File Search RAG (Node + TypeScript, @google/genai)
 
-자동차 사용 설명서를 Gemini File Search에 업로드하고, 해당 파일을 기반으로 질의응답(RAG)을 수행하는 Node.js + TypeScript 예제입니다. 모델 호출은 `@google/genai`를 사용하고, 파일 검색 스토어/업로드는 현재 SDK 미지원 구간이라 REST 호출을 사용합니다.
+자동차 사용 설명서를 Gemini File Search 스토어에 업로드하고, 해당 스토어를 활용해 질의응답(RAG)을 수행하는 예제입니다. 업로드·스토어 생성·질의 모두 `@google/genai`를 사용하며, 필요 시 REST 호출 없이 SDK 경로를 우선 사용합니다.
 
 ## 요구 사항
 
 - Node.js 20 이상
-- Google Gemini API 키 (`GEMINI_API_KEY`)
+- `GEMINI_API_KEY` (필수)
 
 ## 설치
 
@@ -15,55 +15,76 @@ npm install
 
 ## 환경 변수
 
-- `GEMINI_API_KEY` (필수)
-- `GEMINI_FILE_SEARCH_STORE` (선택, 스토어 이름을 직접 지정할 때)
-- `GEMINI_FILE_URI` (스토어 대신 단일 파일 URI를 직접 지정할 때만 사용)
+- `GEMINI_API_KEY` : Gemini API 키
+- `GEMINI_FILE_SEARCH_STORE` : 기본으로 사용할 파일 검색 스토어 이름(선택)
+- `GEMINI_FILE_URI` : 스토어 없이 단일 파일을 직접 참조할 때만 사용(선택, 비권장)
+
+## 스크립트
+
+```json
+"scripts": {
+  "build": "tsc --outDir dist",
+  "create:store": "tsx src/createStore.ts",
+  "upload": "tsx src/uploadManual.ts",
+  "ask": "tsx src/query.ts"
+}
+```
+
+## 동작 개요
+
+- 스토어 관리: `.env`의 `GEMINI_FILE_SEARCH_STORE` → `data/store.json` → 없으면 `fileSearchStores.create`로 `car-manual-store` 자동 생성 후 저장.
+- 업로드: `fileSearchStores.uploadToFileSearchStore` 사용, `chunkingConfig` 포함. 완료까지 `operations.get`으로 폴링 후 `data/uploads.json`에 `name`, `uri`, `mimeType`, `storeName` 기록.
+- 질의: 기본 모델 `gemini-2.5-flash`. 스토어가 있으면 `tools: [{ fileSearch: { fileSearchStoreNames: [storeName] } }]`로 RAG 수행. 스토어가 없고 파일 URI가 있으면 `fileData`로 직접 참조. 응답 텍스트와 인용 URI 출력.
 
 ## 사용법
 
-### 0) 파일 검색 스토어 생성 (최초 1회)
+1. 환경 변수 설정
 
 ```bash
-npm run create:store -- "display-name-선택"
+cp env.example .env
+# .env에 GEMINI_API_KEY 입력, 필요 시 GEMINI_FILE_SEARCH_STORE 지정
 ```
 
-- 생성된 스토어 이름이 `data/store.json`에 저장됩니다. 이미 스토어를 갖고 있다면 `.env`의 `GEMINI_FILE_SEARCH_STORE`를 설정해도 됩니다.
-
-### 1) 매뉴얼 업로드 (스토어에 업로드)
+2. 스토어 생성 (없다면)
 
 ```bash
-npm run upload -- /절대/경로/매뉴얼.pdf "표시 이름(선택)"
+npm run create:store -- "car-manual-store"
 ```
 
-- 업로드 후 인덱싱이 완료될 때까지 대기합니다.
-- 업로드된 파일·스토어 정보는 `data/uploads.json`에 저장되며, 이후 질문 시 기본으로 사용됩니다.
+`data/store.json`에 저장되며, `.env`의 `GEMINI_FILE_SEARCH_STORE`가 있으면 그것을 사용합니다.
 
-### 2) 질문하기 (RAG)
+3. 매뉴얼 업로드
+
+```bash
+npm run upload -- /절대/경로/매뉴얼.pdf "표시이름(선택)"
+```
+
+- 스토어가 없으면 자동 생성 후 업로드
+- 완료까지 폴링, 결과를 `data/uploads.json`에 기록
+
+4. 질문하기 (RAG)
 
 ```bash
 npm run ask -- "이 차의 타이어 공기압은?" [--store <STORE_NAME>] [--model <모델명>]
+# 스토어 없이 파일 URI를 직접 쓰려면
+npm run ask -- --file-uri https://... "질문"
 ```
 
-- 기본으로 `data/uploads.json`의 최신 업로드에 기록된 스토어를 사용합니다.
-- 스토어를 바꾸고 싶다면 `--store` 또는 `.env`의 `GEMINI_FILE_SEARCH_STORE`를 지정하세요.
-- 스토어 없이 단일 파일 URI를 직접 쓰고 싶다면 `--file-uri`나 `.env`의 `GEMINI_FILE_URI`를 사용할 수 있습니다(비추천).
-- 기본 모델은 `gemini-2.5-flash`이며, 다른 모델을 쓰려면 `--model`로 지정하세요.
+- 기본: 최근 업로드의 스토어 사용
+- 스토어 변경: `--store` 또는 `.env`의 `GEMINI_FILE_SEARCH_STORE`
+- 모델 변경: `--model` (기본 `gemini-2.5-flash`)
+- 파일 URI 직접 참조는 스토어가 없을 때만 사용 권장
 
-## 주요 스크립트
+## 파일/폴더
 
-- `src/createStore.ts`: 파일 검색 스토어 생성 (`fileSearchStores.create`)
-- `src/uploadManual.ts`: 파일 업로드 및 인덱싱 상태 대기, 업로드 기록 저장 (REST 호출)
-- `src/query.ts`: `@google/genai`로 Gemini에 질의하고 file search 도구를 사용 (스토어 혹은 파일 URI)
-
-## 폴더 구조
-
-- `src/` : 업로드 및 질의 스크립트
-- `data/uploads.json` : 업로드 이력 저장소
-- `data/store.json` : 기본 스토어 이름 저장
+- `src/createStore.ts` : 파일 검색 스토어 생성
+- `src/uploadManual.ts` : 스토어 자동 생성/업로드/폴링, 업로드 메타 저장
+- `src/query.ts` : 스토어 기반 RAG 질의(`@google/genai`) 또는 파일 URI 직접 참조
+- `data/store.json` : 기본 스토어 이름
+- `data/uploads.json` : 업로드 이력 (name, uri, mimeType, storeName 등)
 - `env.example` : 환경 변수 샘플
 
-## 추가 아이디어
+## 참고
 
-- 업로드 이력을 UI나 CLI 선택형으로 노출
-- 여러 파일을 묶어 vector store 구성 후 파일 검색 설정 확장
-- Cloud Storage 등 외부 스토리지와 연동해 업로드 자동화
+- 업로드 시 `chunkingConfig.whiteSpaceConfig`(chunk 200 tokens, overlap 20 tokens)를 적용합니다.
+- `operations.get`이 SDK에 포함되어 있으므로 별도 REST 폴백 없이 동작합니다. SDK가 변경될 경우 REST 엔드포인트(`https://generativelanguage.googleapis.com/v1beta/operations/...`)로 대체할 수 있습니다.
