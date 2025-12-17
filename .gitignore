@@ -3,6 +3,8 @@ node_modules
 dist
 .env
 data/uploads.json
+data/store.json
 .DS_Store
+
 
 

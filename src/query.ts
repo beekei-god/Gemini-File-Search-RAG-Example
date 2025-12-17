@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "dotenv";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -11,6 +11,8 @@ type StoredUpload = {
   displayName?: string;
   mimeType?: string;
   uploadedAt: string;
+  storeName?: string;
+  fileName?: string;
 };
 
 type CliOptions = {
@@ -18,10 +20,12 @@ type CliOptions = {
   fileUri?: string;
   mimeType?: string;
   model?: string;
+  store?: string;
 };
 
 const API_KEY = process.env.GEMINI_API_KEY ?? "";
 const uploadsJsonPath = path.resolve(process.cwd(), "data/uploads.json");
+const storeJsonPath = path.resolve(process.cwd(), "data/store.json");
 
 if (!API_KEY) {
   console.error("GEMINI_API_KEY 환경 변수를 설정해주세요.");
@@ -46,6 +50,11 @@ function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--model" && argv[i + 1]) {
       parsed.model = argv[++i];
+      continue;
+    }
+
+    if (arg === "--store" && argv[i + 1]) {
+      parsed.store = argv[++i];
       continue;
     }
 
@@ -74,6 +83,20 @@ async function loadLatestUpload(): Promise<StoredUpload | null> {
   }
 }
 
+async function loadStoreName(cliStore?: string): Promise<string | null> {
+  if (cliStore) return cliStore;
+  if (process.env.GEMINI_FILE_SEARCH_STORE)
+    return process.env.GEMINI_FILE_SEARCH_STORE;
+
+  try {
+    const raw = await fs.readFile(storeJsonPath, "utf-8");
+    const parsed = JSON.parse(raw) as { storeName?: string };
+    return parsed.storeName ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
 
@@ -85,40 +108,57 @@ async function main() {
   }
 
   const latestUpload = await loadLatestUpload();
+  const storeName = await loadStoreName(args.store ?? latestUpload?.storeName);
   const fileUri =
     args.fileUri ?? process.env.GEMINI_FILE_URI ?? latestUpload?.uri;
   const mimeType =
     args.mimeType ?? latestUpload?.mimeType ?? "application/octet-stream";
 
-  if (!fileUri) {
+  const genAI = new GoogleGenAI({ apiKey: API_KEY });
+
+  const request = storeName
+    ? {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: args.question }],
+          },
+        ],
+      }
+    : {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: args.question },
+              { fileData: { fileUri, mimeType } },
+            ],
+          },
+        ],
+      };
+
+  if (!storeName && !fileUri) {
     console.error(
-      "참조할 파일 URI를 찾을 수 없습니다. --file-uri 옵션 또는 GEMINI_FILE_URI 환경 변수를 지정해주세요."
+      "참조할 스토어/파일 정보를 찾을 수 없습니다. --store 또는 --file-uri (또는 GEMINI_FILE_SEARCH_STORE / GEMINI_FILE_URI)를 지정하세요."
     );
     process.exit(1);
   }
 
-  const genAI = new GoogleGenerativeAI(API_KEY);
-  const model = genAI.getGenerativeModel({
-    model: args.model ?? "gemini-1.5-pro",
-    tools: [{ fileSearch: {} }] as any,
-    generationConfig: { temperature: 0.2 },
+  const result = await genAI.models.generateContent({
+    model: args.model ?? "gemini-2.5-flash",
+    contents: request.contents as any,
+    config: {
+      temperature: 0.2,
+      tools: (storeName
+        ? [{ fileSearch: { fileSearchStoreNames: [storeName] } }]
+        : [{ fileSearch: {} }]) as any,
+    },
   });
 
-  const request = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: args.question }, { fileData: { fileUri, mimeType } }],
-      },
-    ],
-  };
-
-  const result = await model.generateContent(request as any);
-
   console.log("=== 답변 ===");
-  console.log(result.response.text());
+  console.log(result.text ?? "(응답 없음)");
 
-  const citations = (result.response as any)?.candidates?.[0]?.groundingMetadata
+  const citations = (result as any)?.candidates?.[0]?.groundingMetadata
     ?.citationMetadata?.citations as { uri?: string }[] | undefined;
   if (citations && citations.length > 0) {
     console.log("\n참조된 파일 URI:");
