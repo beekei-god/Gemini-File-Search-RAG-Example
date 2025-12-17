@@ -1,6 +1,6 @@
 # Gemini File Search RAG (Node + TypeScript, @google/genai)
 
-자동차 사용 설명서를 Gemini File Search 스토어에 업로드하고, 해당 스토어를 활용해 질의응답(RAG)을 수행하는 예제입니다. 업로드·스토어 생성·질의 모두 `@google/genai`를 사용하며, 필요 시 REST 호출 없이 SDK 경로를 우선 사용합니다.
+리소스 문서를 Gemini File Search 스토어에 업로드하고, 해당 스토어를 활용해 질의응답(RAG)을 수행하는 예제입니다. 업로드·스토어 생성·질의 모두 `@google/genai`를 사용하며, 필요 시 REST 호출 없이 SDK 경로를 우선 사용합니다.
 
 ## 요구 사항
 
