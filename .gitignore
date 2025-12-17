@@ -1,0 +1,8 @@
+.npm-cache
+node_modules
+dist
+.env
+data/uploads.json
+.DS_Store
+
+

@@ -1,0 +1,31 @@
+{
+  "name": "rag",
+  "version": "1.0.0",
+  "description": "Gemini File Search 기반 자동차 매뉴얼 RAG 예제",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc --outDir dist",
+    "upload": "tsx src/uploadManual.ts",
+    "ask": "tsx src/query.ts"
+  },
+  "keywords": [
+    "gemini",
+    "file-search",
+    "rag",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.2.3",
+    "mime-types": "^3.0.2",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  }
+}
