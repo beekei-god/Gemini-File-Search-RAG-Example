@@ -1,14 +1,18 @@
 {
   "name": "rag",
   "version": "1.0.0",
-  "description": "Gemini File Search 기반 자동차 매뉴얼 RAG 예제",
+  "description": "Gemini File Search 기반 RAG 예제",
   "type": "module",
   "private": true,
   "scripts": {
     "build": "tsc --outDir dist",
-    "create:store": "tsx src/createStore.ts",
-    "upload": "tsx src/uploadManual.ts",
-    "ask": "tsx src/query.ts"
+    "create:store": "tsx src/store/createStore.ts",
+    "list:store": "tsx src/store/listStore.ts",
+    "delete:store": "tsx src/store/deleteStore.ts",
+    "active:store": "tsx src/store/activeStore.ts",
+    "upload:file": "tsx src/file/uploadFile.ts",
+    "list:file": "tsx src/file/listFile.ts",
+    "ask": "tsx src/ask/ask.ts"
   },
   "keywords": [
     "gemini",
@@ -16,7 +20,7 @@
     "rag",
     "typescript"
   ],
-  "author": "",
+  "author": "beekei-god",
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^1.34.0",
