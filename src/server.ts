@@ -12,6 +12,7 @@ import {
   insertStoreData,
   deleteStoreData,
   getActiveStoreName,
+  setActiveStoreData,
 } from "./store/service/storeDataService.js";
 import { uploadFile } from "./file/service/fileService.js";
 import { insertFileData } from "./file/service/fileDataService.js";
@@ -34,7 +35,7 @@ const upload = multer({ dest: uploadsDir });
 // CORS 설정 (필요한 경우)
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, DELETE");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
@@ -86,6 +87,27 @@ app.post("/api/stores", async (req, res) => {
     console.error("스토어 생성 오류:", error);
     const errorMessage =
       error instanceof Error ? error.message : "스토어 생성에 실패했습니다.";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+// 스토어 활성화
+app.put("/api/stores/:storeName/active", async (req, res) => {
+  try {
+    const { storeName } = req.params;
+    const decodedStoreName = decodeURIComponent(storeName);
+
+    await setActiveStoreData(decodedStoreName);
+
+    res.json({
+      success: true,
+      message: "스토어가 활성화되었습니다.",
+      activeStoreName: decodedStoreName,
+    });
+  } catch (error) {
+    console.error("스토어 활성화 오류:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "스토어 활성화에 실패했습니다.";
     res.status(500).json({ error: errorMessage });
   }
 });

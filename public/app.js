@@ -30,6 +30,23 @@ async function createStore(displayName) {
   }
 }
 
+// 스토어 활성화
+async function setActiveStore(storeName) {
+  try {
+    const response = await fetch(`${API_BASE}/stores/${encodeURIComponent(storeName)}/active`, {
+      method: 'PUT',
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || '스토어 활성화에 실패했습니다.');
+    }
+    return data;
+  } catch (error) {
+    console.error('스토어 활성화 오류:', error);
+    throw error;
+  }
+}
+
 // 스토어 삭제
 async function deleteStore(storeName) {
   try {
@@ -110,6 +127,9 @@ function renderStores(stores, activeStoreName) {
         ${store.createTime ? `<div class="store-info-item">📅 생성일: ${formatDate(store.createTime)}</div>` : ''}
       </div>
       <div class="store-actions">
+        ${!store.isActive ? `<button class="btn btn-primary btn-small" onclick="handleSetActiveStore('${escapeHtml(store.name)}', '${escapeHtml(store.displayName)}')">
+          ⭐ 활성화
+        </button>` : ''}
         <button class="btn btn-danger btn-small" onclick="handleDeleteStore('${escapeHtml(store.name)}', '${escapeHtml(store.displayName)}')">
           🗑️ 삭제
         </button>
@@ -159,6 +179,16 @@ async function refreshStores() {
         <p>${error.message}</p>
       </div>
     `;
+  }
+}
+
+// 스토어 활성화 처리
+async function handleSetActiveStore(storeName, displayName) {
+  try {
+    await setActiveStore(storeName);
+    await refreshStores();
+  } catch (error) {
+    alert(`스토어 활성화에 실패했습니다: ${error.message}`);
   }
 }
 
