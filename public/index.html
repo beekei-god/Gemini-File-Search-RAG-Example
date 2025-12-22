@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG 스토어 관리</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📚 RAG 스토어 관리</h1>
+      <p>스토어를 생성하고 파일을 업로드하여 RAG 시스템을 구축하세요</p>
+    </header>
+
+    <main>
+      <!-- 스토어 섹션 -->
+      <section class="section">
+        <div class="section-header">
+          <h2>스토어 관리</h2>
+          <button id="refreshStores" class="btn btn-secondary">🔄 새로고침</button>
+          <button id="createStoreBtn" class="btn btn-primary">➕ 스토어 생성</button>
+        </div>
+
+        <div id="storesList" class="stores-list">
+          <div class="loading">로딩 중...</div>
+        </div>
+      </section>
+
+      <!-- 파일 업로드 섹션 -->
+      <section class="section">
+        <div class="section-header">
+          <h2>파일 업로드</h2>
+        </div>
+        <div class="upload-area">
+          <form id="uploadForm" class="upload-form">
+            <div class="form-group">
+              <label for="storeSelect">대상 스토어:</label>
+              <select id="storeSelect" name="storeName" class="form-control">
+                <option value="">활성 스토어 사용</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="fileInput">파일 선택:</label>
+              <input type="file" id="fileInput" name="file" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="displayName">표시 이름 (선택):</label>
+              <input type="text" id="displayName" name="displayName" class="form-control" placeholder="파일의 표시 이름">
+            </div>
+            <button type="submit" class="btn btn-primary">📤 업로드</button>
+          </form>
+          <div id="uploadStatus" class="upload-status"></div>
+        </div>
+      </section>
+
+      <!-- 질문하기 섹션 -->
+      <section class="section chat-section">
+        <div class="section-header">
+          <h2>💬 질문하기</h2>
+          <div class="chat-controls">
+            <select id="askStoreSelect" name="storeName" class="form-control chat-select">
+              <option value="">활성 스토어 사용</option>
+            </select>
+            <select id="askModelSelect" name="model" class="form-control chat-select">
+              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            </select>
+          </div>
+        </div>
+        <div class="chat-container">
+          <div id="chatMessages" class="chat-messages">
+            <div class="chat-welcome">
+              <div class="welcome-icon">💬</div>
+              <p>업로드한 문서에 대해 질문해보세요!</p>
+            </div>
+          </div>
+          <form id="askForm" class="chat-input-form">
+            <div class="chat-input-wrapper">
+              <textarea 
+                id="questionInput" 
+                name="question" 
+                class="chat-input" 
+                rows="1"
+                placeholder="메시지를 입력하세요..."
+                required
+              ></textarea>
+              <button type="submit" class="btn btn-primary chat-send-btn" title="전송">
+                <span class="send-icon">➤</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 모달: 스토어 생성 -->
+  <div id="createStoreModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>새 스토어 생성</h2>
+      <form id="createStoreForm">
+        <div class="form-group">
+          <label for="storeDisplayName">표시 이름:</label>
+          <div class="form-row">
+            <input type="text" id="storeDisplayName" name="displayName" class="form-control" placeholder="스토어 이름" required>
+            <button type="submit" class="btn btn-primary">생성</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

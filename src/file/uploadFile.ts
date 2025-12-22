@@ -47,7 +47,13 @@ async function main() {
 
   console.log("===== 파일 업로드 시작 =====");
 
-  const uploadedFile = await uploadFile(filePath, storeName, args.displayName);
+  const originalFileName = path.basename(filePath);
+  const uploadedFile = await uploadFile(
+    filePath,
+    storeName,
+    args.displayName,
+    originalFileName
+  );
   if (uploadedFile) {
     await insertFileData({
       storeName: uploadedFile.parent,

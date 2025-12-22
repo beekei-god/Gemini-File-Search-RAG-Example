@@ -6,6 +6,8 @@
   "private": true,
   "scripts": {
     "build": "tsc --outDir dist",
+    "dev": "nodemon --exec tsx src/server.ts",
+    "start": "node dist/server.js",
     "create:store": "tsx src/store/createStore.ts",
     "list:store": "tsx src/store/listStore.ts",
     "delete:store": "tsx src/store/deleteStore.ts",
@@ -25,12 +27,17 @@
   "dependencies": {
     "@google/genai": "^1.34.0",
     "dotenv": "^17.2.3",
+    "express": "^4.18.2",
     "mime-types": "^3.0.2",
+    "multer": "^1.4.5-lts.1",
     "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/mime-types": "^3.0.1",
+    "@types/multer": "^1.4.11",
     "@types/node": "^25.0.3",
+    "nodemon": "^3.1.11",
     "typescript": "^5.9.3"
   }
 }
