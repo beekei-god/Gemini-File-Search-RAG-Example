@@ -130,9 +130,9 @@ function renderStores(stores, activeStoreName) {
         ${!store.isActive ? `<button class="btn btn-primary btn-small" onclick="handleSetActiveStore('${escapeHtml(store.name)}', '${escapeHtml(store.displayName)}')">
           ⭐ 활성화
         </button>` : ''}
-        <button class="btn btn-danger btn-small" onclick="handleDeleteStore('${escapeHtml(store.name)}', '${escapeHtml(store.displayName)}')">
+        ${!store.isActive ? `<button class="btn btn-danger btn-small" onclick="handleDeleteStore('${escapeHtml(store.name)}', '${escapeHtml(store.displayName)}')">
           🗑️ 삭제
-        </button>
+        </button>` : ''}
       </div>
     </div>
   `).join('');
@@ -186,6 +186,7 @@ async function refreshStores() {
 async function handleSetActiveStore(storeName, displayName) {
   try {
     await setActiveStore(storeName);
+    alert(`${storeName}(${displayName}) 스토어가 활성화되었습니다.`);
     await refreshStores();
   } catch (error) {
     alert(`스토어 활성화에 실패했습니다: ${error.message}`);
